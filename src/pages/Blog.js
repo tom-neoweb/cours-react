@@ -9,6 +9,7 @@ const Blog = () => {
     const [blogData, setBlogData] = useState([]);
     const [content, setContent] = useState("");
     const [error, setError] = useState(false);
+    const [author, setAuthor] = useState("");
     const getData = () => {
         axios
         .get("http://localhost:3004/articles")
@@ -25,7 +26,19 @@ const Blog = () => {
         if(content.length < 140) {
             setError(true);
         } else {
-            setError(false);
+            axios.post("http://localhost:3004/articles", {
+                author: author,
+                content: content,
+                date: Date.now(),
+            // Then, attend d'avoir la data pour la charger dans la vue    
+            }).then(() => {
+                setError(false);
+                setAuthor("");
+                setContent("");
+                getData();
+            }, () => {
+                setError(true);
+            });
         }
     }
 
@@ -37,11 +50,18 @@ const Blog = () => {
             <h1>Blog</h1>
 
             <form onSubmit={(event) => handleSubmit(event)}>
-                <input type="text" placeholder='Nom' />
+                <input 
+                    type="text" 
+                    placeholder='Nom' 
+                    onChange={(event) => setAuthor(event.target.value)}
+                    value={author}
+                />
                 <textarea
                     style={{ border: error ? "1px solid red" : "1px solid #61dafb" }}
                     placeholder='Message' 
-                    onChange={(event => setContent(event.target.value))}>
+                    onChange={(event => setContent(event.target.value))}
+                    value={content}
+                >
                 </textarea>
                 {
                     error && <p>Veuillez écrire un minimum de 140 caractères !</p>
@@ -51,7 +71,10 @@ const Blog = () => {
 
             <ul>
                 {
-                    blogData.map((article) => (
+                    blogData
+                    //Trier les articles du plus récents au plus anciens
+                    .sort((a, b) => b.date - a.date)
+                    .map((article) => (
                         <Article key={article.id} article={article}/>
                     ))
                 }
